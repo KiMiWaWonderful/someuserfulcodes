@@ -1,0 +1,126 @@
+applicationContext.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd 
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc.xsd 
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context.xsd 
+		http://www.springframework.org/schema/aop 
+		http://www.springframework.org/schema/aop/spring-aop.xsd 
+		http://www.springframework.org/schema/tx 
+		http://www.springframework.org/schema/tx/spring-tx.xsd ">
+		
+		<context:component-scan base-package="sso.haizhi.serviceImpl"></context:component-scan>
+		
+		<!-- 加载db.properties文件中的内容，db.properties文件中key命名要有一定的特殊规则 -->
+	<context:property-placeholder location="classpath:dbcp.properties" />
+	
+<!-- 配置数据源 ，dbcp -->
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+	</bean>
+	
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+	<property name="dataSource" ref="dataSource"></property>
+	<!-- 加载mybatis的全局配置文件 -->
+	<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		 <property name="mapperLocations" value="classpath:mapper/*.xml"></property>
+		<!-- 这样配置value会出现错误：Could not open ServletContext resource [/ssm.dao] -->
+	
+	</bean>
+
+<!-- 配置一个可以执行批量的sqlSession -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+		<constructor-arg name="executorType" value="BATCH"></constructor-arg>
+	</bean>
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+    <property name="basePackage" value="ssm.mapper"></property>
+    <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+    <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    
+    <tx:annotation-driven/>
+</beans>
+
+
+dispatcherservlet.xml
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+            http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/aop
+            http://www.springframework.org/schema/aop/spring-aop.xsd
+            http://www.springframework.org/schema/tx
+            http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/mvc
+            http://www.springframework.org/schema/mvc/spring-mvc.xsd
+            http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context.xsd">
+            
+            <context:component-scan base-package="sso.haizhi.controller"></context:component-scan>
+           <!--    <context:component-scan base-package="mvc.serviceImpl"></context:component-scan>-->
+             
+             <mvc:annotation-driven conversion-service="conversionService"></mvc:annotation-driven>
+             <mvc:default-servlet-handler/>
+             <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+               <property name="prefix" value="/WEB-INF/jsp/"></property>
+               <property name="suffix" value=".jsp"></property>
+             </bean>
+
+             
+</beans>
+
+
+mybatis-config.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>  
+    <settings>  
+        <setting name="mapUnderscoreToCamelCase" value="true"/>  
+    </settings>  
+    <plugins>
+		<plugin interceptor="com.github.pagehelper.PageInterceptor">
+			<!--分页参数合理化  -->
+			<property name="reasonable" value="true"/>
+		</plugin>
+	</plugins>
+    
+</configuration> 
+
+
+dbcp.properties
+
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.url=jdbc:mysql://localhost:3306/try?serverTimezone=UTC&useSSL=false&useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true
+jdbc.username=root
+jdbc.password=323900llmT
+jdbc.initialSize=30
+jdbc.maxTotal=30
+jdbc.maxActive=50
+jdbc.maxIdle=20
+jdbc.minIdle=20
+jdbc.maxWaitMillis=60000
